@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>贪吃蛇</title>
+    <style type="text/css">
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    </style>
+</head>
+
+<body>
+</body>
+<script type="text/javascript">
+// 1.绘制地图
+function Map() {
+    // 私有成员(不会随便发生变法)
+    var w = 600;
+    var h = 300;
+
+    // 成员方法，展示地图
+    this.showmap = function() {
+        // 创建div 设置css样式  追加给body
+        var tu = document.createElement("div");
+
+        tu.style.width = w + "px";
+        tu.style.height = h + "px";
+        // tu.style.backgroundColor = "pink";
+        tu.style.backgroundImage = "url(images/bg.jpg)";
+
+        document.body.appendChild(tu);
+    }
+}
+
+// 2.绘制食物
+function Food() {
+    var len = 15;
+    // 把食物坐标(权值)声明为公开的，以便在外部访问
+    this.xFood = 0;
+    this.yFood = 0;
+
+    this.piece = null; //页面上唯一的食物对象
+
+    // 绘制
+    this.showfood = function() {
+        // 创建div、设置css样式、追加给body
+        if (this.piece === null) {
+            this.piece = document.createElement('div');
+            this.piece.style.width = this.piece.style.height = len + "px";
+            this.piece.style.backgroundColor = "green";
+            this.piece.style.position = "absolute";
+
+            document.body.appendChild(this.piece);
+        }
+
+
+        // 食物设置绝对定位(position/left/top)
+        // 食物位置 "随机" 摆放
+        // 移动步进值：20px
+        // 食物权值坐标：x轴(0-39) Y轴(0-19)
+        // 食物真实坐标：权值坐标 * 步进值
+        this.xFood = Math.floor(Math.random() * 40); //0-39的随机数
+        this.yFood = Math.floor(Math.random() * 20); //0-19的随机数
+
+        this.piece.style.left = this.xFood * len + "px";
+        this.piece.style.top = this.yFood * len + "px";
+
+    }
+}
+
+// 3.绘制蛇
+function Snake() {
+    var len = 15;
+    this.redirect = "right";
+
+    // 后期snakebody要变化,因此声明为公开的
+    this.snakebody = [
+        [0, 1, "green", null],
+        [1, 1, "green", null],
+        [2, 1, "green", null],
+        [3, 1, "red", null]
+    ];
+
+    // a.绘制小蛇
+    this.showsnake = function() {
+        // 遍历小蛇的各个蛇节，并以此创建即可
+        for (var i = 0; i < this.snakebody.length; i++) {
+            // this.snakebody[i];//代表每一个蛇节
+            // 创建蛇节div
+            if (this.snakebody[i][3] === null) { //判断没有创建对应的蛇节
+                this.snakebody[i][3] = document.createElement("div");
+                // var this.snakebody[i][3] = document.createElement("div");
+                // 设置css样式(宽度、高度、颜色)
+                this.snakebody[i][3].style.width = this.snakebody[i][3].style.height = len + "px";
+                this.snakebody[i][3].style.backgroundColor = this.snakebody[i][2];
+                // 绝对定位
+                this.snakebody[i][3].style.position = "absolute";
+
+                // 把蛇节追加给body
+                document.body.appendChild(this.snakebody[i][3]);
+            }
+
+            this.snakebody[i][3].style.left = this.snakebody[i][0] * len + "px";
+            this.snakebody[i][3].style.top = this.snakebody[i][1] * len + "px";
+        }
+    }
+
+    // b.小蛇移动
+    this.movesnake = function() {
+        // 非蛇头蛇节(当前蛇节的新坐标  是下个蛇节的旧坐标)
+        for (var i = 0; i < this.snakebody.length - 1; i++) {
+            this.snakebody[i][0] = this.snakebody[i + 1][0];
+            this.snakebody[i][1] = this.snakebody[i + 1][1];
+        }
+
+        if (this.redirect == "right") {
+            // 蛇头X坐标递增
+             this.snakebody[this.snakebody.length - 1][0] += 1;
+        }
+        if (this.redirect == "left") {
+            // 蛇头X坐标递减
+             this.snakebody[this.snakebody.length - 1][0] -= 1;
+        }
+        if (this.redirect == "up") {
+            // 蛇头y坐标递减
+             this.snakebody[this.snakebody.length - 1][1] -= 1;
+        }
+        if (this.redirect == "down") {
+            // 蛇头y坐标递增
+             this.snakebody[this.snakebody.length - 1][1] += 1;
+        }
+
+        // 判断蛇头是否碰到食物
+        // 蛇头坐标
+        var xSnake = this.snakebody[this.snakebody.length - 1][0];
+        var ySnake = this.snakebody[this.snakebody.length - 1][1];
+        // 食物坐标food.xFood/food.yFood
+        if (xSnake == food.xFood && ySnake == food.yFood) {
+            console.log('I see food!')
+                // 吃食物增加蛇节
+            var newjoint = [this.snakebody[0][0], this.snakebody[0][1], 'green', null];
+            this.snakebody.unshift(newjoint); //把蛇节增加到数组的第一个位置去
+
+            // 原食物消失，成新生成一个食物
+            food.showfood();
+        }
+
+        // 控制小蛇在地图范围内移动
+        if (xSnake < 0 || xSnake > 39 || ySnake < 0 || ySnake > 19) {
+            alert("game over!");
+            // 清除计时器
+            clearInterval(mytime);
+
+            return false;
+        }
+        // 不能吃自己(头部坐标与其他蛇节坐标一致的话就表示迟到自己)
+        for (var k = 0; k < this.snakebody.length - 1; k++) {
+
+            if (this.snakebody[k][0] == xSnake && this.snakebody[k][1] == ySnake) {
+                alert("game over kill you by yourself!");
+                clearInterval(mytime);
+                return false;
+            }
+        }
+
+
+        // 根据新坐标绘制小蛇
+        this.showsnake();
+    }
+}
+
+
+window.onload = function() {
+    // 地图
+    var map = new Map();
+    map.showmap();
+
+    // 食物
+    food = new Food(); //声明全局的以便在加载时间函数外部访问
+    food.showfood();
+
+    // 蛇
+    snake = new Snake(); //声明全局的以便在加载时间函数外部访问
+    snake.showsnake();
+
+    // 小蛇移动
+    // setInterval(全局变量，事件)
+    mytime = setInterval("snake.movesnake()", 200);
+
+    // 设置键盘事件,控制小蛇移动方向
+    document.onkeydown = function(evt) {
+        var evt = evt.keyCode; //通过事件对象获得数值码，进而直到被触发键值
+        // if (evt == 38) {
+        //     snake.redirect = "up";
+        // }
+        // if (evt == 40) {
+        //     snake.redirect = "down";
+        // }
+        // if (evt == 37) {
+        //     snake.redirect = "left";
+        // }
+        // if (evt == 39) {
+        //     snake.redirect = "right";
+        // }
+
+        switch (evt) {
+            case 38:
+                if (snake.redirect == "down") {
+                    // snake.redirect = "up";
+                return false;
+                }
+                snake.redirect = "up";
+                break;
+            case 40:
+                if (snake.redirect == "up") {
+                   // snake.redirect = "down";
+                return false;
+                }
+                snake.redirect = "down";
+                break;
+            case 37:
+                if (snake.redirect == "right") {
+                   // snake.redirect = "left";
+                return false;
+                }
+                snake.redirect = "left";
+                break;
+            case 39:
+                if (snake.redirect == "left") {
+                   // snake.redirect = "right";
+                return false;
+                }
+                snake.redirect = "right";
+                break;
+        }
+
+
+
+    }
+
+}
+</script>
+
+</html>
+<!-- 涉及技术点：面向对象、DOM操作、事件操作、时间函数setInterval
+     1.绘制地图
+     2.绘制食物
+     3.绘制小蛇
+     4.***小蛇移动***
+     5.控制小蛇移动方向
+        通过"上下左右"键来控制小蛇的移动方向
+     6.小蛇吃食物
+        (1).头部碰到食物(两者坐标一致)
+        (2).原食物消失，在其他位置重新生成一个食物
+            ***吃食物增加蛇节***
+        (3).吃食物增加蛇节  原食物消失
+     7.控制小蛇移动的范围
+        (1).不能越出四周边界
+        (2).不能吃自己
+
+     扩展：
+        (1).吃食物设置计数器
+        (2).设置游戏等级(每吃到5个食物，都提升一下速度)
+            提高速度：停止旧的setInterval(),根据新时间重新设置一个setInterval();
+      -->
